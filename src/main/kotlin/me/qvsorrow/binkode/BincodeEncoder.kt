@@ -1,12 +1,16 @@
 package me.qvsorrow.binkode
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import me.qvsorrow.me.qvsorrow.binkode.*
+import me.qvsorrow.me.qvsorrow.binkode.BYTE
+import me.qvsorrow.me.qvsorrow.binkode.INT
+import me.qvsorrow.me.qvsorrow.binkode.LONG
+import me.qvsorrow.me.qvsorrow.binkode.SHORT
 import okio.Buffer
 import java.lang.Double.doubleToLongBits
 import java.lang.Float.floatToIntBits
@@ -244,6 +248,7 @@ internal class FixedIntEncoder(private val delegate: IntEncoder) : IntEncoder by
 internal class VariableIntEncoder(private val delegate: IntEncoder) : IntEncoder by delegate {
 
     private val denseEncoder = DenseUIntEncoder(delegate)
+    // TODO: try pass denseEncoder into VariableUIntEncoder
     private val unsigned = VariableUIntEncoder(delegate)
 
     override fun encodeShort(value: Short) {
@@ -338,46 +343,3 @@ internal class DenseUIntEncoder(private val delegate: IntEncoder) {
     }
 }
 
-
-/**
- * [Zigzag algorithm](https://docs.rs/bincode/2.0.0-rc/bincode/config/struct.Configuration.html#method.with_variable_int_encoding)
- */
-
-private fun zigzag(value: Short): UShort {
-    return when {
-        value == 0.toShort() -> 0u
-        value < 0 -> ((-value).toUInt() * 2u - 1u).toUShort()
-        else -> (value.toUShort() * 2u.toUShort()).toUShort()
-    }
-}
-
-private fun zigzag(value: Int): UInt {
-    return when {
-        value == 0 -> 0u
-        value < 0 -> (-value).toUInt() * 2u - 1u
-        else -> value.toUInt() * 2u
-    }
-}
-
-private fun zigzag(value: Long): ULong {
-    return when {
-        value == 0L -> 0u
-        value < 0 -> (-value).toULong() * 2u - 1u
-        else -> value.toULong() * 2u
-    }
-}
-
-private val SerialDescriptor.isUnsignedNumber: Boolean
-    get() = this.isInline && this in unsignedNumberDescriptors
-
-private val unsignedNumberDescriptors = setOf(
-    UInt.serializer().descriptor,
-    ULong.serializer().descriptor,
-    UByte.serializer().descriptor,
-    UShort.serializer().descriptor
-)
-
-private const val BYTE = 251uL
-private const val SHORT = 65536uL
-private const val INT = 4294967296uL
-private const val LONG = 18446744073709551615uL
