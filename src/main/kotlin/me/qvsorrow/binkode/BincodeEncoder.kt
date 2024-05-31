@@ -1,6 +1,7 @@
 package me.qvsorrow.binkode
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
@@ -19,9 +20,9 @@ import java.lang.Float.floatToIntBits
 class BincodeEncoder(
     private val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule,
+    val buffer: Buffer = Buffer(),
 ) : AbstractEncoder() {
 
-    val buffer = Buffer()
     private val writer = OkioBufferWriter(buffer)
 
     private val intEncoder = run {
@@ -63,9 +64,14 @@ class BincodeEncoder(
     }
 
     override fun encodeString(value: String) {
-        val bytes = value.toByteArray(Charsets.UTF_8)
-        intEncoder.encodeLong(bytes.size.toLong())
-        writer.writeBytes(bytes)
+        if (value.startsWith(SEALED_TAG)) {
+            val index = value.drop(SEALED_TAG.length + 1).toInt()
+            uintEncoder.encodeInt(index)
+        } else {
+            val bytes = value.toByteArray(Charsets.UTF_8)
+            intEncoder.encodeLong(bytes.size.toLong())
+            writer.writeBytes(bytes)
+        }
     }
 
     override fun encodeEnum(enumDescriptor: SerialDescriptor, index: Int) {
@@ -82,6 +88,14 @@ class BincodeEncoder(
             descriptor.isUnsignedNumber -> uintEncoder
             else -> super.encodeInline(descriptor)
         }
+    }
+
+    override fun encodeNotNullMark() {
+        intEncoder.encodeByte(1)
+    }
+
+    override fun encodeNull() {
+        intEncoder.encodeByte(0)
     }
 }
 

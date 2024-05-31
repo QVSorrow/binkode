@@ -1,5 +1,8 @@
 package me.qvsorrow.me.qvsorrow.binkode
 
+import kotlinx.serialization.InternalSerializationApi
+import kotlinx.serialization.SealedClassSerializer
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 
@@ -46,6 +49,10 @@ internal fun reverseZigZag(value: ULong): Long = when {
 internal val SerialDescriptor.isUnsignedNumber: Boolean
     get() = this.isInline && this in unsignedNumberDescriptors
 
+@OptIn(InternalSerializationApi::class)
+internal val SerializationStrategy<*>.isSealed: Boolean
+    get() = this is SealedClassSerializer<*>
+
 internal val unsignedNumberDescriptors = setOf(
     UInt.serializer().descriptor,
     ULong.serializer().descriptor,
@@ -61,3 +68,6 @@ internal const val LONG = 18446744073709551615uL
 internal val SHORT_MARKER = 251u.toUByte()
 internal val INT_MARKER = 252u.toUByte()
 internal val LONG_MARKER = 253u.toUByte()
+
+
+internal const val SEALED_TAG = "me.qvsorrow.bincode.sealed.tag"

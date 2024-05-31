@@ -5,7 +5,6 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.serializer
 import okio.Buffer
 import java.io.ByteArrayInputStream
 
@@ -20,7 +19,11 @@ sealed class Bincode(
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
         val buffer = Buffer().run {
             when (val limit = configuration.byteLimit) {
-                is SizeLimit.Bounded -> readFrom(ByteArrayInputStream(bytes), minOf(limit.size.toLong(), bytes.size.toLong()))
+                is SizeLimit.Bounded -> readFrom(
+                    ByteArrayInputStream(bytes),
+                    minOf(limit.size.toLong(), bytes.size.toLong())
+                )
+
                 SizeLimit.Infinite -> readFrom(ByteArrayInputStream(bytes), bytes.size.toLong())
             }
 
@@ -47,9 +50,6 @@ fun Bincode(from: Bincode = Bincode.Default, builderAction: BincodeBuilder.() ->
     val configuration = builder.build()
     return BincodeImpl(configuration, builder.serializersModule)
 }
-
-inline fun <reified T> Bincode.encodeToByteArray(value: T) = encodeToByteArray(serializer<T>(), value)
-inline fun <reified T> Bincode.decodeFromByteArray(bytes: ByteArray) = decodeFromByteArray(serializer<T>(), bytes)
 
 internal class BincodeImpl(
     configuration: BincodeConfiguration,

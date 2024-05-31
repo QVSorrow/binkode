@@ -1,8 +1,10 @@
 package me.qvsorrow.binkode
 
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerializationException
+import kotlinx.serialization.*
+import kotlinx.serialization.builtins.serializer
+import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeDecoder
@@ -30,17 +32,11 @@ class BincodeDecoder(
         if (configuration.isVariableInt) VariableIntDecoder(endian) else FixedIntDecoder(endian)
     }
 
-    private val uintDecoder = UIntBincodeDecoder(serializersModule, intDecoder)
-    private var elementIndex = 0
+    private val uintDecoder = UIntBincodeDecoder(serializersModule, intDecoder.unsignedDecoder())
+    private var sealedIndex: UInt = UInt.MAX_VALUE
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        if (elementIndex == descriptor.elementsCount) return CompositeDecoder.DECODE_DONE
-        return elementIndex++
-    }
-
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder {
-        elementIndex = 0
-        return this
+        return CompositeDecoder.DECODE_DONE
     }
 
     override fun decodeBoolean(): Boolean {
@@ -79,7 +75,20 @@ class BincodeDecoder(
         return Char(reader.readUtf8CodePoint())
     }
 
+    override fun <T> decodeSerializableValue(deserializer: DeserializationStrategy<T>): T {
+        if (deserializer.descriptor.kind === PolymorphicKind.SEALED) {
+            val type = uintDecoder.decodeInt().toUInt()
+            sealedIndex = type
+        }
+        return super.decodeSerializableValue(deserializer)
+    }
+
     override fun decodeString(): String {
+        if (sealedIndex != UInt.MAX_VALUE) {
+            val name = "$SEALED_TAG;$sealedIndex"
+            sealedIndex = UInt.MAX_VALUE
+            return name
+        }
         val size = intDecoder.decodeLong()
         val bytes = reader.readBytes(size)
         return String(bytes, Charsets.UTF_8)
@@ -101,6 +110,10 @@ class BincodeDecoder(
     }
 
     override fun decodeSequentially(): Boolean = true
+
+    override fun decodeNotNullMark(): Boolean {
+        return decodeBoolean()
+    }
 }
 
 private const val BYTE_TRUE = 1.toByte()
