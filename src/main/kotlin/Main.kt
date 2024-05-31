@@ -3,11 +3,17 @@ package me.qvsorrow
 import kotlinx.serialization.*
 import me.qvsorrow.binkode.*
 import me.qvsorrow.me.qvsorrow.binkode.SEALED_TAG
+import okio.Buffer
+import okio.Sink
+import okio.buffer
+import okio.sink
+import java.io.ByteArrayOutputStream
 
 
 fun main() {
     val bincode = Bincode
     val data = demo
+    checkStreaming(bincode) { data }
     checkBinary(bincode) { data }
 }
 
@@ -18,6 +24,23 @@ private inline fun <reified T> checkBinary(bincode: BinaryFormat, inputFactory: 
     val bytes = bincode.encodeToByteArray(input)
     displayBytes(bytes)
     val output = bincode.decodeFromByteArray<T>(bytes)
+
+    check(input == output) {
+        println("Actual: $input")
+        println("Expected: $output")
+    }
+
+    println("Input:  $input")
+    println("Output: $output")
+}
+
+private inline fun <reified T> checkStreaming(bincode: Bincode, inputFactory: () -> T) {
+    val input = inputFactory()
+
+    val buffer = Buffer()
+    bincode.encodeToSink(buffer, input)
+    println(buffer.size)
+    val output = bincode.decodeFromSource<T>(buffer.buffer)
 
     check(input == output) {
         println("Actual: $input")

@@ -5,7 +5,10 @@ import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
-import okio.Buffer
+import kotlinx.serialization.serializer
+import me.qvsorrow.me.qvsorrow.binkode.toBuffered
+import me.qvsorrow.me.qvsorrow.binkode.withLimit
+import okio.*
 import java.io.ByteArrayInputStream
 
 
@@ -16,33 +19,48 @@ sealed class Bincode(
 
     companion object Default : Bincode(BincodeConfiguration(), EmptySerializersModule())
 
-    override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
-        val buffer = Buffer().run {
-            when (val limit = configuration.byteLimit) {
-                is SizeLimit.Bounded -> readFrom(
-                    ByteArrayInputStream(bytes),
-                    minOf(limit.size.toLong(), bytes.size.toLong())
-                )
-
-                SizeLimit.Infinite -> readFrom(ByteArrayInputStream(bytes), bytes.size.toLong())
-            }
-
+    override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
+        Buffer().use { sink ->
+            encodeToSink(sink, serializer, value)
+            return sink.readByteArray()
         }
-        val decoder = BincodeDecoder(configuration, serializersModule, buffer)
+    }
+
+    override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
+        Buffer().use { source ->
+            source.write(bytes)
+            return decodeFromSource(source, deserializer)
+        }
+    }
+
+    fun <T> encodeToSink(sink: Sink, serializer: SerializationStrategy<T>, value: T) {
+        val encoder = BincodeEncoder(configuration, serializersModule, sink.toBuffered())
+        encoder.encodeSerializableValue(serializer, value)
+    }
+
+    fun <T> decodeFromSource(source: Source, deserializer: DeserializationStrategy<T>): T {
+        val bufferedSource = source
+            .withLimit(configuration.byteLimit)
+            .toBuffered()
+
+        val decoder = BincodeDecoder(configuration, serializersModule, bufferedSource)
         val value = decoder.decodeSerializableValue(deserializer)
         when (configuration.trailing) {
-            Trailing.RejectTrailing -> require(buffer.exhausted()) { "Bincode configuration Trailing.RejectTrailing requires all bytes are read" }
+            Trailing.RejectTrailing -> require(bufferedSource.exhausted()) { "Bincode configuration Trailing.RejectTrailing requires all bytes are read" }
             Trailing.AllowTrailing -> Unit
         }
         return value
     }
-
-    override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
-        val encoder = BincodeEncoder(configuration, serializersModule)
-        encoder.encodeSerializableValue(serializer, value)
-        return encoder.buffer.readByteArray()
-    }
 }
+
+inline fun <reified T> Bincode.encodeToSink(sink: Sink, value: T) {
+    return encodeToSink(sink, serializer<T>(), value)
+}
+
+inline fun <reified T> Bincode.decodeFromSource(source: Source): T {
+    return decodeFromSource(source, serializer<T>())
+}
+
 
 fun Bincode(from: Bincode = Bincode.Default, builderAction: BincodeBuilder.() -> Unit): Bincode {
     val builder = BincodeBuilder(from)

@@ -29,3 +29,4 @@ As a result, Bincode is suitable for storing data. Be aware that it does not imp
 - [x] Nullable 
 - [ ] Sealed (supported, but requires custom serial name)
 - [x] value class 
+- [x] streaming support via Okio Source/Sink

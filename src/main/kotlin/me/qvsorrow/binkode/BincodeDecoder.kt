@@ -1,31 +1,23 @@
 package me.qvsorrow.binkode
 
 import kotlinx.serialization.*
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.PolymorphicKind
 import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.descriptors.StructureKind
 import kotlinx.serialization.encoding.AbstractDecoder
-import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
 import me.qvsorrow.me.qvsorrow.binkode.*
-import me.qvsorrow.me.qvsorrow.binkode.BYTE
-import me.qvsorrow.me.qvsorrow.binkode.INT_MARKER
-import me.qvsorrow.me.qvsorrow.binkode.LONG_MARKER
-import me.qvsorrow.me.qvsorrow.binkode.SHORT_MARKER
-import me.qvsorrow.me.qvsorrow.binkode.reverseZigZag
-import okio.Buffer
+import okio.BufferedSource
 
 @OptIn(ExperimentalSerializationApi::class)
 class BincodeDecoder(
     private val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule,
-    buffer: Buffer,
+    source: BufferedSource,
 ) : AbstractDecoder() {
 
-    private val reader = OkioBufferReader(buffer)
+    private val reader = OkioBufferReader(source)
 
     private val intDecoder = run {
         val endian = if (configuration.isBigEndian) BigEndianIntDecoder(reader) else LittleEndianIntDecoder(reader)
@@ -165,62 +157,62 @@ interface Reader {
 }
 
 @JvmInline
-value class OkioBufferReader(private val buffer: Buffer) : Reader {
+value class OkioBufferReader(private val source: BufferedSource) : Reader {
 
     override fun readByte(): Byte {
-        return buffer.readByte()
+        return source.readByte()
     }
 
     override fun readBytes(length: Long): ByteArray {
-        return buffer.readByteArray(length)
+        return source.readByteArray(length)
     }
 
     override fun readShortLe(): Short {
-        return buffer.readShortLe()
+        return source.readShortLe()
     }
 
     override fun readShortBe(): Short {
-        return buffer.readShort()
+        return source.readShort()
     }
 
     override fun readIntLe(): Int {
-        return buffer.readIntLe()
+        return source.readIntLe()
     }
 
     override fun readIntBe(): Int {
-        return buffer.readInt()
+        return source.readInt()
     }
 
     override fun readLongLe(): Long {
-        return buffer.readLongLe()
+        return source.readLongLe()
     }
 
     override fun readLongBe(): Long {
-        return buffer.readLong()
+        return source.readLong()
     }
 
     override fun readFloatLe(): Float {
-        return Float.fromBits(buffer.readIntLe())
+        return Float.fromBits(source.readIntLe())
     }
 
     override fun readFloatBe(): Float {
-        return Float.fromBits(buffer.readInt())
+        return Float.fromBits(source.readInt())
     }
 
     override fun readDoubleLe(): Double {
-        return Double.fromBits(buffer.readLongLe())
+        return Double.fromBits(source.readLongLe())
     }
 
     override fun readDoubleBe(): Double {
-        return Double.fromBits(buffer.readLong())
+        return Double.fromBits(source.readLong())
     }
 
     override fun readUtf8CodePoint(): Int {
-        return buffer.readUtf8CodePoint()
+        return source.readUtf8CodePoint()
     }
 
     override fun readUtf8(length: Long): String {
-        return buffer.readUtf8(length)
+        return source.readUtf8(length)
     }
 
 }

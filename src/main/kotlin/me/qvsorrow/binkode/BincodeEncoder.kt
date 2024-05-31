@@ -1,18 +1,14 @@
 package me.qvsorrow.binkode
 
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
 import me.qvsorrow.me.qvsorrow.binkode.*
-import me.qvsorrow.me.qvsorrow.binkode.BYTE
-import me.qvsorrow.me.qvsorrow.binkode.INT
-import me.qvsorrow.me.qvsorrow.binkode.LONG
-import me.qvsorrow.me.qvsorrow.binkode.SHORT
 import okio.Buffer
+import okio.BufferedSink
 import java.lang.Double.doubleToLongBits
 import java.lang.Float.floatToIntBits
 
@@ -20,10 +16,10 @@ import java.lang.Float.floatToIntBits
 class BincodeEncoder(
     private val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule,
-    val buffer: Buffer = Buffer(),
+    sink: BufferedSink,
 ) : AbstractEncoder() {
 
-    private val writer = OkioBufferWriter(buffer)
+    private val writer = OkioBufferWriter(sink)
 
     private val intEncoder = run {
         val endian = if (configuration.isBigEndian) BigEndianIntEncoder(writer) else LittleEndianIntEncoder(writer)
@@ -143,38 +139,38 @@ interface Writer {
 }
 
 @JvmInline
-internal value class OkioBufferWriter(private val buffer: Buffer) : Writer {
+internal value class OkioBufferWriter(private val sink: BufferedSink) : Writer {
 
     override fun writeByte(value: Byte) {
-        buffer.writeByte(value.toInt())
+        sink.writeByte(value.toInt())
     }
 
     override fun writeBytes(value: ByteArray) {
-        buffer.write(value)
+        sink.write(value)
     }
 
     override fun writeShortLe(value: Short) {
-        buffer.writeShortLe(value.toInt())
+        sink.writeShortLe(value.toInt())
     }
 
     override fun writeShortBe(value: Short) {
-        buffer.writeShort(value.toInt())
+        sink.writeShort(value.toInt())
     }
 
     override fun writeIntLe(value: Int) {
-        buffer.writeIntLe(value)
+        sink.writeIntLe(value)
     }
 
     override fun writeIntBe(value: Int) {
-        buffer.writeInt(value)
+        sink.writeInt(value)
     }
 
     override fun writeLongLe(value: Long) {
-        buffer.writeLongLe(value)
+        sink.writeLongLe(value)
     }
 
     override fun writeLongBe(value: Long) {
-        buffer.writeLong(value)
+        sink.writeLong(value)
     }
 
     override fun writeFloatLe(value: Float) {
@@ -194,11 +190,11 @@ internal value class OkioBufferWriter(private val buffer: Buffer) : Writer {
     }
 
     override fun writeUtf8CodePoint(value: Int) {
-        buffer.writeUtf8CodePoint(value)
+        sink.writeUtf8CodePoint(value)
     }
 
     override fun writeUtf8(value: String) {
-        buffer.writeUtf8(value)
+        sink.writeUtf8(value)
     }
 }
 
@@ -262,6 +258,7 @@ internal class FixedIntEncoder(private val delegate: IntEncoder) : IntEncoder by
 internal class VariableIntEncoder(private val delegate: IntEncoder) : IntEncoder by delegate {
 
     private val denseEncoder = DenseUIntEncoder(delegate)
+
     // TODO: try pass denseEncoder into VariableUIntEncoder
     private val unsigned = VariableUIntEncoder(delegate)
 
