@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "me.qvsorrow"
-version = "1.0-SNAPSHOT"
+version = "0.1.0"
 
 repositories {
     mavenCentral()
@@ -16,7 +16,6 @@ dependencies {
     implementation("com.squareup.okio:okio-jvm:3.9.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("io.github.serpro69:kotlin-faker:1.6.0")
 }
 
 tasks.test {

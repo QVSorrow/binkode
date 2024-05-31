@@ -1,24 +1,42 @@
 package me.qvsorrow
 
-import kotlinx.serialization.Serializable
-import me.qvsorrow.binkode.Bincode
-import me.qvsorrow.binkode.IntEncoding
-import me.qvsorrow.binkode.decodeFromByteArray
-import me.qvsorrow.binkode.encodeToByteArray
+import kotlinx.serialization.*
+import me.qvsorrow.binkode.*
 
 
 fun main() {
-    check(demo)
-}
-
-private inline fun<reified T> check(input: T) {
-
     val bincode = Bincode {
         intEncoding = IntEncoding.Variable
+        endian = ByteEndian.LittleEndian
     }
+    val data = List(10) { demoSmall }
+    checkBinary(bincode) { data }
+}
+
+private inline fun <reified T> checkBinary(bincode: BinaryFormat, inputFactory: () -> T) {
+
+    val input = inputFactory()
+
     val bytes = bincode.encodeToByteArray(input)
     displayBytes(bytes)
     val output = bincode.decodeFromByteArray<T>(bytes)
+
+    check(input == output) {
+        println("Actual: $input")
+        println("Expected: $output")
+    }
+
+    println("Input:  $input")
+    println("Output: $output")
+}
+
+private inline fun <reified T> checkString(bincode: StringFormat, inputFactory: () -> T) {
+
+    val input = inputFactory()
+
+    val string = bincode.encodeToString(input)
+    println(string)
+    val output = bincode.decodeFromString<T>(string)
 
     check(input == output) {
         println("Actual: $input")
@@ -47,6 +65,7 @@ data class Demo(
     val char: Char,
     val string: String,
     val enum: DemoEnum,
+    val list: List<Int>,
 )
 
 val demo = Demo(
@@ -60,6 +79,21 @@ val demo = Demo(
     char = 'A',
     string = "Привіт 🧑‍🚒",
     enum = DemoEnum.C,
+    list = listOf(42, 1337, -0),
+)
+
+val demoSmall = Demo(
+    boolean = false,
+    byte = 1,
+    short = 1,
+    int = 1,
+    long = 1,
+    float = 1f,
+    double = 1.0,
+    char = 'A',
+    string = "Привіт 🧑‍🚒",
+    enum = DemoEnum.C,
+    list = listOf(42, 1337, -0),
 )
 
 

@@ -20,7 +20,7 @@ sealed class Bincode(
     override fun <T> decodeFromByteArray(deserializer: DeserializationStrategy<T>, bytes: ByteArray): T {
         val buffer = Buffer().run {
             when (val limit = configuration.byteLimit) {
-                is SizeLimit.Bounded -> readFrom(ByteArrayInputStream(bytes), limit.size.toLong())
+                is SizeLimit.Bounded -> readFrom(ByteArrayInputStream(bytes), minOf(limit.size.toLong(), bytes.size.toLong()))
                 SizeLimit.Infinite -> readFrom(ByteArrayInputStream(bytes), bytes.size.toLong())
             }
 

@@ -1,6 +1,7 @@
 package me.qvsorrow.binkode
 
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.AbstractEncoder
@@ -43,10 +44,10 @@ class BincodeDecoder(
     }
 
     override fun decodeBoolean(): Boolean {
-        return when (intDecoder.decodeByte()) {
+        return when (val value = intDecoder.decodeByte()) {
             BYTE_TRUE -> true
             BYTE_FALSE -> false
-            else -> error("unreachable")
+            else -> decodingException("Boolean expected to be either $BYTE_TRUE or $BYTE_FALSE but was $value.")
         }
     }
 
@@ -98,6 +99,8 @@ class BincodeDecoder(
             else -> super.decodeInline(descriptor)
         }
     }
+
+    override fun decodeSequentially(): Boolean = true
 }
 
 private const val BYTE_TRUE = 1.toByte()
@@ -342,4 +345,14 @@ internal class DenseUIntDecoder(private val delegate: IntDecoder) {
     }
 
 }
+
+
+class BincodeDecodingException(message: String, cause: Throwable? = null) : SerializationException(message, cause)
+
+
+@Suppress("NOTHING_TO_INLINE")
+private inline fun decodingException(message: String, cause: Throwable? = null): Nothing {
+    throw BincodeDecodingException(message, cause)
+}
+
 
