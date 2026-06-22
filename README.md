@@ -11,6 +11,84 @@ via [kotlinx.serialization](https://github.com/Kotlin/kotlinx.serialization)
 - `Bincode` implementation of `kotlinx.serialization.BinaryFormat` have a stable API
 - The library expected to be fully compatible with rust bincode implementation.
 
+## Installation
+
+Available on Maven Central. Add it to your Gradle build:
+
+```kotlin
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.github.qvsorrow:binkode:0.1.0")
+}
+```
+
+## Usage
+
+### Binary encode / decode
+
+```kotlin
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import me.qvsorrow.binkode.Bincode
+
+@Serializable
+data class Point(val x: Int, val y: Int)
+
+val bytes = Bincode.encodeToByteArray(Point(1, 2))
+val point = Bincode.decodeFromByteArray<Point>(bytes)
+```
+
+### Streaming with Okio
+
+```kotlin
+import me.qvsorrow.binkode.Bincode
+import me.qvsorrow.binkode.decodeFromSource
+import me.qvsorrow.binkode.encodeToSink
+import okio.Buffer
+
+val buffer = Buffer()
+Bincode.encodeToSink(buffer, Point(1, 2))
+val point = Bincode.decodeFromSource<Point>(buffer)
+```
+
+### Custom configuration
+
+```kotlin
+import me.qvsorrow.binkode.Bincode
+import me.qvsorrow.binkode.ByteEndian
+import me.qvsorrow.binkode.IntEncoding
+
+val bincode = Bincode {
+    endian = ByteEndian.BigEndian
+    intEncoding = IntEncoding.Fixed
+}
+```
+
+### Sealed types
+
+Sealed subtypes require an explicit serial name built from `SEALED_TAG`:
+
+```kotlin
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import me.qvsorrow.binkode.SEALED_TAG
+
+@Serializable
+sealed interface Shape {
+    @SerialName("$SEALED_TAG;0")
+    @Serializable
+    data class Circle(val radius: Double) : Shape
+
+    @SerialName("$SEALED_TAG;1")
+    @Serializable
+    data class Square(val side: Double) : Shape
+}
+```
+
 ### From Bincode FAQ:
 The encoding format is stable, provided the same configuration is used. This should ensure that later versions can still read data produced by a previous versions of the library if no major version change has occurred.
 
