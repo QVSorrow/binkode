@@ -7,11 +7,10 @@ import kotlinx.serialization.encoding.AbstractDecoder
 import kotlinx.serialization.encoding.CompositeDecoder
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.modules.SerializersModule
-import me.qvsorrow.me.qvsorrow.binkode.*
 import okio.BufferedSource
 
 @OptIn(ExperimentalSerializationApi::class)
-class BincodeDecoder(
+public class BincodeDecoder(
     private val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule,
     source: BufferedSource,
@@ -139,7 +138,7 @@ private class UIntBincodeDecoder(
 }
 
 
-interface Reader {
+internal interface Reader {
     fun readByte(): Byte
     fun readBytes(length: Long): ByteArray
     fun readShortLe(): Short
@@ -157,7 +156,7 @@ interface Reader {
 }
 
 @JvmInline
-value class OkioBufferReader(private val source: BufferedSource) : Reader {
+internal value class OkioBufferReader(private val source: BufferedSource) : Reader {
 
     override fun readByte(): Byte {
         return source.readByte()
@@ -217,7 +216,7 @@ value class OkioBufferReader(private val source: BufferedSource) : Reader {
 
 }
 
-interface IntDecoder {
+internal interface IntDecoder {
     fun decodeByte(): Byte
     fun decodeShort(): Short
     fun decodeInt(): Int
@@ -352,7 +351,7 @@ internal class DenseUIntDecoder(private val delegate: IntDecoder) {
 }
 
 
-class BincodeDecodingException(message: String, cause: Throwable? = null) : SerializationException(message, cause)
+internal class BincodeDecodingException(message: String, cause: Throwable? = null) : SerializationException(message, cause)
 
 
 @Suppress("NOTHING_TO_INLINE")

@@ -1,4 +1,4 @@
-package me.qvsorrow.me.qvsorrow.binkode
+package me.qvsorrow.binkode
 
 import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.SealedClassSerializer
@@ -70,4 +70,4 @@ internal val INT_MARKER = 252u.toUByte()
 internal val LONG_MARKER = 253u.toUByte()
 
 
-internal const val SEALED_TAG = "me.qvsorrow.bincode.sealed.tag"
+public const val SEALED_TAG: String = "me.qvsorrow.bincode.sealed.tag"

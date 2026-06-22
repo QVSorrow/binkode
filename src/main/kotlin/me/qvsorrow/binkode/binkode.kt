@@ -6,18 +6,18 @@ import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.modules.EmptySerializersModule
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
-import me.qvsorrow.me.qvsorrow.binkode.toBuffered
-import me.qvsorrow.me.qvsorrow.binkode.withLimit
-import okio.*
-import java.io.ByteArrayInputStream
+import okio.Buffer
+import okio.Sink
+import okio.Source
+import okio.use
 
 
-sealed class Bincode(
-    val configuration: BincodeConfiguration,
+public sealed class Bincode(
+    public val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule
 ) : BinaryFormat {
 
-    companion object Default : Bincode(BincodeConfiguration(), EmptySerializersModule())
+    public companion object Default : Bincode(BincodeConfiguration(), EmptySerializersModule())
 
     override fun <T> encodeToByteArray(serializer: SerializationStrategy<T>, value: T): ByteArray {
         Buffer().use { sink ->
@@ -33,12 +33,12 @@ sealed class Bincode(
         }
     }
 
-    fun <T> encodeToSink(sink: Sink, serializer: SerializationStrategy<T>, value: T) {
+    public fun <T> encodeToSink(sink: Sink, serializer: SerializationStrategy<T>, value: T) {
         val encoder = BincodeEncoder(configuration, serializersModule, sink.toBuffered())
         encoder.encodeSerializableValue(serializer, value)
     }
 
-    fun <T> decodeFromSource(source: Source, deserializer: DeserializationStrategy<T>): T {
+    public fun <T> decodeFromSource(source: Source, deserializer: DeserializationStrategy<T>): T {
         val bufferedSource = source
             .withLimit(configuration.byteLimit)
             .toBuffered()
@@ -53,16 +53,16 @@ sealed class Bincode(
     }
 }
 
-inline fun <reified T> Bincode.encodeToSink(sink: Sink, value: T) {
+public inline fun <reified T> Bincode.encodeToSink(sink: Sink, value: T) {
     return encodeToSink(sink, serializer<T>(), value)
 }
 
-inline fun <reified T> Bincode.decodeFromSource(source: Source): T {
+public inline fun <reified T> Bincode.decodeFromSource(source: Source): T {
     return decodeFromSource(source, serializer<T>())
 }
 
 
-fun Bincode(from: Bincode = Bincode.Default, builderAction: BincodeBuilder.() -> Unit): Bincode {
+public fun Bincode(from: Bincode = Bincode.Default, builderAction: BincodeBuilder.() -> Unit): Bincode {
     val builder = BincodeBuilder(from)
     builder.builderAction()
     val configuration = builder.build()
@@ -74,15 +74,15 @@ internal class BincodeImpl(
     module: SerializersModule,
 ) : Bincode(configuration, module)
 
-class BincodeBuilder(from: Bincode) {
+public class BincodeBuilder(from: Bincode) {
 
-    var serializersModule: SerializersModule = from.serializersModule
-    var endian: ByteEndian = from.configuration.endian
-    var intEncoding: IntEncoding = from.configuration.intEncoding
-    var byteLimit: SizeLimit = from.configuration.byteLimit
-    var trailing: Trailing = from.configuration.trailing
+    public var serializersModule: SerializersModule = from.serializersModule
+    public var endian: ByteEndian = from.configuration.endian
+    public var intEncoding: IntEncoding = from.configuration.intEncoding
+    public var byteLimit: SizeLimit = from.configuration.byteLimit
+    public var trailing: Trailing = from.configuration.trailing
 
-    fun build(): BincodeConfiguration {
+    public fun build(): BincodeConfiguration {
         return BincodeConfiguration(
             endian = endian,
             intEncoding = intEncoding,

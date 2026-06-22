@@ -6,14 +6,13 @@ import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
-import me.qvsorrow.me.qvsorrow.binkode.*
 import okio.Buffer
 import okio.BufferedSink
 import java.lang.Double.doubleToLongBits
 import java.lang.Float.floatToIntBits
 
 @OptIn(ExperimentalSerializationApi::class)
-class BincodeEncoder(
+public class BincodeEncoder(
     private val configuration: BincodeConfiguration,
     override val serializersModule: SerializersModule,
     sink: BufferedSink,
@@ -120,7 +119,7 @@ private class UIntBincodeEncoder(
 }
 
 
-interface Writer {
+internal interface Writer {
     fun writeByte(value: Byte)
     fun writeBytes(value: ByteArray)
 
@@ -199,7 +198,7 @@ internal value class OkioBufferWriter(private val sink: BufferedSink) : Writer {
 }
 
 
-interface IntEncoder {
+internal interface IntEncoder {
     fun encodeByte(value: Byte)
     fun encodeShort(value: Short)
     fun encodeInt(value: Int)
