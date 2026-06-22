@@ -1,20 +1,26 @@
-package me.qvsorrow
+package me.qvsorrow.binkode
 
-import kotlinx.serialization.*
-import me.qvsorrow.binkode.*
-import me.qvsorrow.me.qvsorrow.binkode.SEALED_TAG
+import kotlinx.serialization.BinaryFormat
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.StringFormat
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.encodeToString
 import okio.Buffer
-import okio.Sink
-import okio.buffer
-import okio.sink
-import java.io.ByteArrayOutputStream
+import kotlin.test.Test
 
+class Example {
 
-fun main() {
-    val bincode = Bincode
-    val data = demo
-    checkStreaming(bincode) { data }
-    checkBinary(bincode) { data }
+    @Test
+    fun example() {
+        val bincode = Bincode
+        val data = demo
+        checkStreaming(bincode) { data }
+        checkBinary(bincode) { data }
+    }
+
 }
 
 private inline fun <reified T> checkBinary(bincode: BinaryFormat, inputFactory: () -> T) {

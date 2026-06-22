@@ -1,6 +1,5 @@
-package me.qvsorrow.me.qvsorrow.binkode
+package me.qvsorrow.binkode
 
-import me.qvsorrow.binkode.SizeLimit
 import okio.*
 
 internal class ByteLimitSource(

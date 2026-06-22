@@ -3,7 +3,7 @@ package me.qvsorrow.binkode
 import java.nio.ByteOrder
 
 
-data class BincodeConfiguration(
+public data class BincodeConfiguration(
 
     // defaults match bincode rust crate
     // https://github.com/bincode-org/bincode/blob/trunk/docs/spec.md
@@ -14,19 +14,19 @@ data class BincodeConfiguration(
     val trailing: Trailing = Trailing.RejectTrailing,
 ) {
 
-    val isBigEndian = when (endian) {
+    internal val isBigEndian: Boolean = when (endian) {
         ByteEndian.NativeEndian -> ByteOrder.nativeOrder() == ByteOrder.BIG_ENDIAN
         ByteEndian.BigEndian -> true
         ByteEndian.LittleEndian -> false
     }
 
-    val isVariableInt = when (intEncoding) {
+    internal val isVariableInt: Boolean = when (intEncoding) {
         IntEncoding.Variable -> true
         IntEncoding.Fixed -> false
     }
 }
 
-enum class ByteEndian {
+public enum class ByteEndian {
     /**
      * Platform native byte endian.
      * Useful for direct communication with native libraries.
@@ -46,7 +46,7 @@ enum class ByteEndian {
     LittleEndian,
 }
 
-enum class IntEncoding {
+public enum class IntEncoding {
     /**
      * Encoding an unsigned integer v (of any type excepting u8/i8) works as follows:
      *
@@ -62,12 +62,12 @@ enum class IntEncoding {
     Fixed,
 }
 
-sealed interface SizeLimit {
-    data object Infinite : SizeLimit
-    data class Bounded(val size: ULong) : SizeLimit
+public sealed interface SizeLimit {
+    public data object Infinite : SizeLimit
+    public data class Bounded(val size: ULong) : SizeLimit
 }
 
-enum class Trailing {
+public enum class Trailing {
     RejectTrailing,
     AllowTrailing,
 }
