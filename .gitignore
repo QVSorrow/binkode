@@ -40,3 +40,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### Local-only release wrappers (inject secrets from 1Password) ###
+scripts/*.local.sh
